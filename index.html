@@ -777,6 +777,7 @@
 			x-trap.inert.noscroll="!apiKey"
 			x-cloak
 			x.transition.opacity
+			x-init="$nextTick($focus.focus($refs.apiKeyInput))"
 			aria-labelledby="modal-title"
 			role="dialog"
 			aria-modal="true"
