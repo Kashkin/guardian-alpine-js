@@ -1,0 +1,19 @@
+# Packages
+node_modules
+
+# Built folders + files
+public
+
+# Common files
+.history
+.DS_Store
+.project
+.settings
+*.esproj
+
+# Sensitive files
+.env
+
+# Use .gitkeep files to keep ignored directories
+# eg: /path/to/dir/*
+!/**/.gitkeep

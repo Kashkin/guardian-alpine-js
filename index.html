@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Guardian Search • Alpine JS</title>
+		<link rel="stylesheet" href="/src/css/site.css" />
+		<style>
+			[x-cloak] {
+				display: none;
+			}
+		</style>
+		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="/dist/assets/favicon/apple-touch-icon.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="/dist/assets/favicon/favicon-32x32.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="/dist/assets/favicon/favicon-16x16.png"
+		/>
+		<link rel="manifest" href="/dist/assets/favicon/site.webmanifest" />
+		<link
+			rel="mask-icon"
+			href="/dist/assets/favicon/safari-pinned-tab.svg"
+			color="#506991"
+		/>
+		<link rel="shortcut icon" href="/dist/assets/favicon/favicon.ico" />
+		<meta name="msapplication-TileColor" content="#506991" />
+		<meta
+			name="msapplication-config"
+			content="/dist/assets/favicon/browserconfig.xml"
+		/>
+	</head>
+	<body
+		class="flex flex-col min-h-screen bg-white dark:bg-slate-900"
+		@keyup.slash="$focus.focus($refs.input)"
+		x-data="search()"
+		x-init="$watch('paramKeywords', (newValue, oldValue) => {
+				newValue != oldValue && newValue.length > 3  ? $nextTick(async() => { paramPage = 1; retrieveResults(newValue) }) : null
+			})"
+	>
+		<header class="bg-white shadow dark:bg-slate-900 dark:shadow-slate-800">
+			<nav class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+				<div class="flex items-center justify-between h-16">
+					<div class="flex-shrink-0">
+						<svg
+							class="w-12 h-12"
+							viewBox="0 0 56 56"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M28 0C22.4621 0 17.0486 1.64217 12.444 4.71885C7.83947 7.79553 4.25064 12.1685 2.13139 17.2849C0.0121322 22.4012 -0.542361 28.0311 0.538025 33.4625C1.61841 38.894 4.28515 43.8831 8.20102 47.799C12.1169 51.7149 17.106 54.3816 22.5375 55.462C27.969 56.5424 33.5988 55.9879 38.7151 53.8686C43.8315 51.7494 48.2045 48.1605 51.2812 43.556C54.3578 38.9514 56 33.5379 56 28C56 20.5739 53.05 13.452 47.799 8.20101C42.548 2.94999 35.4261 0 28 0Z"
+								class="fill-brand-main dark:fill-white"
+							/>
+							<path
+								d="M33 6.92C36.63 7.5 41.24 9.98 42.89 11.75V19.75H41.89L33 7.82V6.92ZM29.66 7.42H29.57C23.22 7.42 19.77 16.22 19.77 28.08C19.77 39.95 23.22 48.74 29.57 48.74H29.66V49.65C20.1 50.3 7.24 43.02 7.57 28.07C7.23 13.14 20.09 5.86 29.66 6.51V7.42ZM45.82 29.95L42.82 31.25V44.69C39.9573 47.0269 36.5985 48.6789 33 49.52V31L29.7 29.91V29H45.82V29.95Z"
+								class="fill-white dark:fill-brand-main"
+							/>
+						</svg>
+					</div>
+					<!-- Mobile select for sections / pillars -->
+					<div class="flex sm:hidden">
+						<label for="sectionSelect" class="sr-only"
+							>Section</label
+						>
+						<select
+							class="flex-grow text-base rounded form-select bg-white-50 forms-select dark:bg-slate-800"
+							:class="paramSection ? 'text-[--dark] border-[--pastel] focus:ring-[--bright] focus:border-[--bright] dark:text-[--bright] dark:border-[--dark] dark:focus:ring-[--bright] pillar/' + paramSection : 'text-slate-300 border-slate-400 focus:ring-brand-pastel focus:border-brand-pastel dark:text-slate-200/80 dark:border-slate-600'"
+							name="sectionSelect"
+							id="sectionSelect"
+							x-model="paramSection"
+							@change.debounce="retrieveResults()"
+						>
+							<option value="">All</option>
+							<option value="news">News</option>
+							<option value="opinion">Opinion</option>
+							<option value="sport">Sport</option>
+							<option value="culture">Culture</option>
+							<option value="lifestyle">Lifestyle</option>
+						</select>
+					</div>
+					<!-- Desktop links for sections / pillars -->
+					<ul
+						class="items-center hidden font-medium sm:flex type-base gap-x-4 md:gap-x-6"
+					>
+						<li>
+							<a
+								@click.prevent="paramSection = 'news', retrieveResults()"
+								class="pb-1 transition-colors border-b-2 border-transparent text-news-main opacity-80 outline ring-current hover:border-current dark:text-news-bright"
+								:class="paramSection == 'news' ? '!border-current' : 'border-transparent'"
+								href="https://www.theguardian.com"
+								>News</a
+							>
+						</li>
+						<li>
+							<a
+								@click.prevent="paramSection = 'opinion', retrieveResults()"
+								class="pb-1 transition-colors border-b-2 border-transparent text-opinion-main opacity-80 outline ring-current hover:border-current dark:text-opinion-bright"
+								:class="paramSection == 'opinion' ? '!border-current' : 'border-transparent'"
+								href="https://www.theguardian.com/commentisfree"
+								>Opinion</a
+							>
+						</li>
+						<li>
+							<a
+								@click.prevent="paramSection = 'sport', retrieveResults()"
+								class="pb-1 transition-colors border-b-2 border-transparent text-sport-main opacity-80 outline ring-current hover:border-current dark:text-sport-bright"
+								:class="paramSection == 'sport' ? '!border-current' : 'border-transparent'"
+								href="https://www.theguardian.com/sport"
+								>Sport</a
+							>
+						</li>
+						<li>
+							<a
+								@click.prevent="paramSection = 'culture', retrieveResults()"
+								class="pb-1 transition-colors border-b-2 border-transparent text-culture-main opacity-80 outline ring-current hover:border-current dark:text-culture-bright"
+								:class="paramSection == 'culture' ? '!border-current' : 'border-transparent'"
+								href="https://www.theguardian.com/culture"
+								>Culture</a
+							>
+						</li>
+						<li>
+							<a
+								@click.prevent="paramSection = 'lifestyle', retrieveResults()"
+								class="pb-1 transition-colors border-b-2 border-transparent text-lifestyle-main opacity-80 outline ring-current hover:border-current dark:text-lifestyle-bright"
+								:class="paramSection == 'lifestyle' ? '!border-current' : 'border-transparent'"
+								href="https://www.theguardian.com/lifeandstyle"
+								>Lifestyle</a
+							>
+						</li>
+					</ul>
+					<!-- TODO: Link to GitHub Repo! -->
+					<a
+						href="#"
+						class="transition-opacity text-brand-main outline dark:text-brand-pastel hover:opacity-80"
+					>
+						<span class="sr-only">View on GitHub</span>
+						<span class="text-2xl icon">
+							<svg aria-hidden="true">
+								<use href="#github-mark" />
+							</svg>
+						</span>
+					</a>
+				</div>
+			</nav>
+		</header>
+
+		<!-- Content -->
+		<div class="w-full max-w-5xl px-4 mx-auto mt-12 sm:px-6 lg:px-8">
+			<form
+				class="relative flex w-full gap-4"
+				action="https://theguardian.com"
+			>
+				<input
+					class="w-full px-2 py-4 transition-colors bg-transparent border-0 border-b-4 md:pr-20 md:px-4 text-brand-dark border-brand-pastel type-2xl forms-input placeholder-brand-pastel/70 dark:text-slate-300 focus:outline-none focus:ring-0 hocus:border-brand-main dark:hocus:border-white/70"
+					name="q"
+					type="text"
+					placeholder="Search The Guardian (press / to focus)"
+					x-ref="input"
+					x-model.debounce.500ms="paramKeywords"
+				/>
+				<button
+					@click.prevent="paramPage = 1; retrieveResults()"
+					class="grid flex-shrink-0 w-16 h-16 transition rounded-full max-md:text-white max-md:bg-brand-main max-md:dark:bg-brand-pastel md:absolute md:top-0 md:bottom-0 md:right-0 md:w-20 md:h-20 type-xl text-brand-main place-content-center dark:text-slate-300 focus:outline-none hocus:bg-brand-main hocus:text-white dark:hocus:bg-brand-pastel"
+					type="submit"
+					aria-label="Search"
+				>
+					<span class="icon">
+						<svg aria-hidden="true">
+							<use href="#search" />
+						</svg>
+					</span>
+				</button>
+			</form>
+
+			<section class="relative w-full mb-16">
+				<!-- Shown on first visit before search -->
+				<div
+					class="flex flex-col items-center justify-center h-full max-w-md mx-auto mt-16 text-center transition-opacity type-base"
+					x-show="!$store.search.results"
+					x-transition.opacity
+					:class="{ 'opacity-40': loading }"
+				>
+					<h2
+						class="font-serif type-base text-brand-dark/80 dark:text-slate-300/80"
+					>
+						What are you looking for?
+					</h2>
+					<p
+						class="mt-4 leading-snug type-sm text-slate-600/80 dark:text-slate-400/80"
+					>
+						A review of
+						<button
+							class="underline transition hocus:no-underline outline text-culture-main hover:text-culture-dark dark:hover:text-culture-bright"
+							type="button"
+							@click="paramKeywords = 'Oppenheimer'"
+						>
+							Oppenheimer</button
+						>, or perhaps
+						<button
+							class="underline transition hocus:no-underline outline text-culture-main hover:text-culture-dark dark:hover:text-culture-bright"
+							type="button"
+							@click="paramKeywords = 'Greta Gerwig'"
+						>
+							Greta Gerwig's
+						</button>
+						<button
+							class="underline transition hocus:no-underline outline text-culture-main hover:text-culture-dark dark:hover:text-culture-bright"
+							type="button"
+							@click="paramKeywords = 'Barbie'"
+						>
+							Barbie?
+						</button>
+						Results from the
+						<button
+							class="underline transition hocus:no-underline outline text-sport-main hover:text-sport-dark dark:hover:text-sport-bright"
+							type="button"
+							@click="paramKeywords = 'World Cup'"
+						>
+							FIFA Women's World Cup?
+						</button>
+						More troubling statistics about the
+						<button
+							class="underline transition hocus:no-underline outline text-news-main hover:text-news-dark dark:text-news-bright dark:hover:text-news-pastel"
+							type="button"
+							@click="paramKeywords = 'climate'"
+						>
+							climate crisis?
+						</button>
+						Some new
+						<button
+							class="underline transition hocus:no-underline outline text-lifestyle-main hover:text-lifestyle-dark dark:hover:text-lifestyle-bright"
+							type="button"
+							@click="paramKeywords = 'vegetarian recipes'"
+						>
+							vegetarian recipes?
+						</button>
+						Satirical cartoons from
+						<button
+							class="underline transition hocus:no-underline outline text-opinion-main hover:text-opinion-dark dark:hover:text-opinion-bright"
+							type="button"
+							@click="paramKeywords = 'First Dog on the Moon'"
+						>
+							First Dog on the Moon?
+						</button>
+					</p>
+				</div>
+				<!-- Search tools -->
+				<div
+					x-transition.opacity
+					x-cloak
+					x-show="$store.search.results"
+					class="flex flex-col gap-6 mt-6 sm:items-center sm:flex-row"
+				>
+					<div class="flex items-center gap-2">
+						<label
+							for="sortSelect"
+							class="font-medium type-sm text-slate-600/80 dark:text-slate-400/80"
+							>Sort</label
+						>
+						<select
+							class="forms-input min-w-[13ch] inline-flex items-center rounded-full border border-slate-200 bg-white py-1.5 pl-3 pr-4 type-sm font-medium text-slate-800/80 dark:bg-slate-950 dark:text-slate-300/80 dark:border-slate-600 focus:ring-brand-pastel focus:border-brand-pastel"
+							name="sortSelect"
+							id="sortSelect"
+							x-model="paramSort"
+							@change.debounce="retrieveResults()"
+						>
+							<option value="newest">Newest</option>
+							<option value="oldest">Oldest</option>
+							<option value="relevance">Relevance</option>
+						</select>
+					</div>
+					<!-- Divider -->
+					<span
+						x-cloak
+						x-show="paramSection"
+						x-transition.opacity
+						class="self-stretch hidden min-h-full border-l sm:block border-slate-300 dark:border-slate-700"
+					></span>
+					<!-- Active section, if set -->
+					<div
+						x-cloak
+						x-show="paramSection"
+						x-transition.opacity
+						class="flex items-center gap-2"
+					>
+						<legend
+							class="font-medium type-sm text-slate-600/80 dark:text-slate-400/80"
+						>
+							Section
+						</legend>
+						<span
+							class="inline-flex items-center rounded-full border border-slate-200 bg-white py-1.5 pl-3 pr-2 type-sm font-medium text-slate-800/80 dark:bg-slate-950 dark:text-slate-300/80 dark:border-slate-600"
+						>
+							<span
+								x-text="paramSection"
+								class="capitalize"
+							></span>
+							<button
+								@click="paramSection = null, retrieveResults()"
+								type="button"
+								class="inline-flex flex-shrink-0 w-6 h-6 p-1 ml-1 text-base transition rounded-full outline text-slate-400 hover:bg-slate-200 hover:text-slate-500 dark:hover-brand-pastel dark:hover:text-slate-700"
+							>
+								<span class="sr-only"
+									>Remove filter for Objects</span
+								>
+								<span class="icon">
+									<svg aria-hidden="true">
+										<use href="#x" />
+									</svg>
+								</span>
+							</button>
+						</span>
+					</div>
+				</div>
+				<!-- No results -->
+				<div
+					class="flex flex-col items-center justify-center h-full transition-opacity"
+					x-show="$store.search.results && $store.search.results.total == 0"
+					x-cloak
+					x-transition.opacity
+					:class="{ 'opacity-40': loading }"
+				>
+					<div
+						class="max-w-md mt-16 leading-snug text-center text-brand-dark dark:text-brand-pastel"
+					>
+						<h2 class="mb-2 font-serif type-2xl">Uh oh&hellip;</h2>
+						<p class="type-lg">
+							There are no articles that match your search. Please
+							try again with different keywords.
+						</p>
+					</div>
+				</div>
+
+				<!-- Search results -->
+				<div
+					x-cloak
+					x-show="$store.search.results && $store.search.results.total > 0"
+					class="relative flex flex-col items-stretch justify-between flex-grow h-full"
+					:class="{ 'opacity-40': loading }"
+					x-ref="results"
+				>
+					<!-- Active page / total results -->
+					<p
+						class="mt-12 mb-6 text-brand-dark dark:text-slate-400/80"
+					>
+						Showing
+						<strong
+							class="font-medium text-brand-main dark:text-slate-300/80"
+							x-text="$store.search.results ? parseInt($store.search.results.startIndex).toLocaleString('en-AU') : ''"
+						></strong>
+						to
+						<strong
+							class="font-medium text-brand-main dark:text-slate-300/80"
+							x-text="$store.search.results ? parseInt($store.search.results.pages > 1 ? $store.search.results.pageSize + $store.search.results.startIndex : $store.search.results.total).toLocaleString('en-AU') : ''"
+						></strong>
+						of
+						<strong
+							class="font-medium text-brand-main dark:text-slate-300/80"
+							x-text="$store.search.results ? parseInt($store.search.results.total).toLocaleString('en-AU') : ''"
+						></strong>
+					</p>
+
+					<!-- Repeater for articles -->
+					<!-- Note: The :key property helps Alpine track unique elements and is required for pins -->
+					<div class="flex flex-col gap-y-8 md:gap-y-16">
+						<template
+							x-cloak
+							x-for="item in ($store.search.results ? $store.search.results.results : [])"
+							:key="item.id"
+						>
+							<article
+								x-data="{ article: item, isPinned: $store.pinnedArticles.isPinned(item) }"
+								x-init="$watch('$store.pinnedArticles.articles', () => isPinned = $store.pinnedArticles.isPinned(article) )"
+								x-effect="isPinned = $store.pinnedArticles.isPinned(article) "
+								class="relative flex flex-col shadow-md rounded-xl dark:shadow-slate-950/40 md:flex-row shadow-slate-800/10"
+								:class="{ [item.pillarId]: item.pillarId, 'pillar/default': !item.pillarId}"
+							>
+								<div
+									class="relative aspect-[16/9] sm:aspect-[2/1] lg:aspect-square md:w-56 lg:w-72 md:shrink-0"
+								>
+									<img
+										loading="lazy"
+										:src="item.fields.thumbnail"
+										x-show="item.fields.thumbnail"
+										alt=""
+										class="absolute inset-0 z-10 object-cover w-full h-full rounded-xl bg-slate-50 dark:bg-slate-800"
+									/>
+									<!-- Image fallback -->
+									<div
+										x-show="!item.fields.thumbnail"
+										class="absolute inset-0 z-10 grid place-content-center text-white bg-[--pastel] dark:bg-[--dark] opacity-80 rounded-xl type-3xl"
+									>
+										<span class="icon">
+											<svg aria-hidden="true">
+												<use
+													xlink:href="#remove-media-image"
+												/>
+											</svg>
+										</span>
+									</div>
+									<!-- Ring for images with white backgrounds -->
+									<div
+										class="absolute inset-0 z-10 rounded-xl ring-2 mix-blend-darken ring-inset ring-[--faded]"
+									></div>
+								</div>
+								<div
+									class="bg-[--faded] px-4 relative overflow-hidden flex-grow sm:px-8 pr-14 pt-8 pb-6 max-md:-mt-4 max-md:rounded-b-xl md:px-16 md:pr-20 md:-ml-4 md:py-6 md:rounded-r-xl dark:bg-slate-950 dark:before:content-[''] dark:before:absolute dark:before:inset-0 dark:before:bg-[--dark] dark:before:opacity-10"
+								>
+									<div
+										class="flex items-center type-xs gap-x-4"
+									>
+										<time
+											:datetime="item.webPublicationDate"
+											class="font-medium text-slate-600/70 dark:text-slate-400/70"
+											x-text="new Date(item.webPublicationDate).toLocaleDateString('en-AU')"
+										></time>
+										<span
+											x-show="item.pillarName"
+											x-text="item.pillarName"
+											class="relative z-10 type-2xs rounded-full bg-[--dark] px-3 py-1.5 font-medium text-[--faded] hover:bg-[--bright]"
+										></span>
+									</div>
+									<div class="relative max-w-xl group">
+										<h3
+											class="mt-3 font-serif leading-tight type-lg"
+										>
+											<a
+												class="text-[--main] transition-colors outline ring-offset-[--faded] hover:text-[--dark] dark:ring-offset-slate-950"
+												x-text="item.webTitle"
+												:href="item.webUrl"
+											>
+											</a>
+										</h3>
+										<p
+											class="mt-5 leading-snug text-slate-600/80 type-base dark:text-slate-400/80"
+											x-html="item.fields.trailText"
+										></p>
+									</div>
+									<div
+										x-show="item.fields.byline"
+										class="flex pt-4 mt-6 border-t border-white dark:border-slate-800"
+									>
+										<div class="leading-tight type-sm">
+											<p
+												class="font-medium text-slate-800/70 dark:text-slate-300/70"
+												x-text="item.fields.byline"
+											></p>
+										</div>
+									</div>
+									<!-- Pin button -->
+									<div
+										class="absolute top-0 right-0 pt-6 pr-2 md:pt-2"
+									>
+										<button
+											@click="$store.pinnedArticles.toggle(article)"
+											type="button"
+											class="w-10 h-10 outline grid group/button place-content-center rounded-full bg-[--pastel] text-[--main] type-lg transition hover:opacity-100"
+											:class="isPinned ? 'opacity-100 hover:text-[--dark]' : 'opacity-40'"
+										>
+											<span
+												class="sr-only"
+												x-text="isPinned ? 'Unpin this article' : 'Pin this article'"
+												>Pin this article</span
+											>
+											<span class="relative icon">
+												<svg
+													class="block transition group-hover/button:opacity-0"
+													aria-hidden="true"
+												>
+													<use href="#pin" />
+												</svg>
+												<svg
+													class="absolute inset-0 transition opacity-0 group-hover/button:opacity-100"
+													aria-hidden="true"
+												>
+													<use href="#remove-pin" />
+												</svg>
+											</span>
+										</button>
+									</div>
+									<!-- Pillar icon -->
+									<span
+										class="absolute text-[--pastel] text-8xl sm:text-9xl mix-blend-multiply opacity-20 icon -right-6 -bottom-6 dark:mix-blend-color-dodge dark:opacity-10"
+									>
+										<svg aria-hidden="true">
+											<use
+												:href="'#' + (item.pillarId ?? 'pillar/news')"
+											/>
+										</svg>
+									</span>
+								</div>
+							</article>
+						</template>
+					</div>
+
+					<!-- Pagination -->
+					<div class="flex justify-between mt-16 gap-x-8">
+						<button
+							@click="paramPage > 1 ? paramPage = (paramPage = paramPage - 1, retrieveResults()) : null"
+							type="button"
+							:aria-disabled="paramPage == 1"
+							class="flex items-center gap-4 px-4 py-2 font-medium text-white transition-colors rounded group bg-brand-main type-base outline hover:bg-brand-dark aria-disabled:bg-slate-300 aria-disabled:hover:bg-slate-300 dark:bg-slate-400 dark:text-brand-dark dark:hover:bg-slate-300 dark:aria-disabled:bg-slate-600 dark:aria-disabled:hover:bg-slate-600"
+						>
+							<span
+								class="transition-transform icon group-hover:-translate-x-2"
+							>
+								<svg aria-hidden="true">
+									<use href="#arrow-left" />
+								</svg>
+							</span>
+							<span>Previous</span>
+						</button>
+						<button
+							@click="paramPage < $store.search.results.pages ? (paramPage = paramPage + 1, retrieveResults()) : null"
+							type="button"
+							:aria-disabled="!$store.search.results || paramPage == $store.search.results.pages"
+							class="flex items-center gap-4 px-4 py-2 font-medium text-white transition-colors rounded group bg-brand-main type-base outline hover:bg-brand-dark aria-disabled:bg-slate-300 aria-disabled:hover:bg-slate-300 dark:bg-slate-400 dark:text-brand-dark dark:hover:bg-slate-300 dark:aria-disabled:bg-slate-600"
+						>
+							<span>Next</span>
+							<span
+								class="transition-transform icon group-hover:translate-x-2"
+							>
+								<svg aria-hidden="true">
+									<use href="#arrow-right" />
+								</svg>
+							</span>
+						</button>
+					</div>
+				</div>
+				<!-- Loading -->
+				<div
+					class="absolute inset-0 z-10 flex justify-center text-brand-main dark:text-slate-600"
+					x-show="loading"
+				>
+					<svg
+						class="w-16 h-16 mt-12 lg:mt-20 text-blue"
+						viewBox="0 0 44 44"
+						xmlns="http://www.w3.org/2000/svg"
+						stroke="currentColor"
+					>
+						<g fill="none" fill-rule="evenodd" stroke-width="2">
+							<circle cx="22" cy="22" r="1">
+								<animate
+									attributeName="r"
+									begin="0s"
+									dur="1.8s"
+									values="1; 20"
+									calcMode="spline"
+									keyTimes="0; 1"
+									keySplines="0.165, 0.84, 0.44, 1"
+									repeatCount="indefinite"
+								/>
+								<animate
+									attributeName="stroke-opacity"
+									begin="0s"
+									dur="1.8s"
+									values="1; 0"
+									calcMode="spline"
+									keyTimes="0; 1"
+									keySplines="0.3, 0.61, 0.355, 1"
+									repeatCount="indefinite"
+								/>
+							</circle>
+							<circle cx="22" cy="22" r="1">
+								<animate
+									attributeName="r"
+									begin="-0.9s"
+									dur="1.8s"
+									values="1; 20"
+									calcMode="spline"
+									keyTimes="0; 1"
+									keySplines="0.165, 0.84, 0.44, 1"
+									repeatCount="indefinite"
+								/>
+								<animate
+									attributeName="stroke-opacity"
+									begin="-0.9s"
+									dur="1.8s"
+									values="1; 0"
+									calcMode="spline"
+									keyTimes="0; 1"
+									keySplines="0.3, 0.61, 0.355, 1"
+									repeatCount="indefinite"
+								/>
+							</circle>
+						</g>
+					</svg>
+				</div>
+			</section>
+
+			<!-- Pinned articles -->
+			<section
+				class="mb-16"
+				x-cloak
+				x-show="$store.search.results || $store.pinnedArticles.articles.length"
+				x-ref="pins"
+			>
+				<h2
+					class="mt-12 mb-4 font-serif type-2xl text-brand-dark dark:text-slate-400/80"
+				>
+					Pinned articles
+				</h2>
+				<!-- Empty state -->
+				<div
+					x-show="$store.pinnedArticles.articles.length === 0"
+					x-transition.opacity
+					class="relative flex flex-col items-center w-full p-12 text-center border-2 border-dashed rounded-lg border-slate-300 dark:border-slate-700"
+				>
+					<span class="icon type-2xl text-brand-pastel">
+						<svg aria-hidden="true">
+							<use xlink:href="#pin" />
+						</svg>
+					</span>
+					<h3
+						class="mt-2 font-medium type-sm text-slate-800/80 dark:text-slate-300/80"
+					>
+						Nothing pinned yet
+					</h3>
+					<p
+						class="mt-1 type-xs text-slate-600/80 dark:text-slate-400/80"
+					>
+						Get started by pinning articles to your collection.
+					</p>
+				</div>
+
+				<!-- Repeater for articles -->
+				<div
+					x-cloak
+					x-show="$store.pinnedArticles.articles.length"
+					x-transition.opacity
+					class="grid grid-cols-1 gap-8 auto-rows-fr md:grid-cols-2 lg:grid-cols-3"
+				>
+					<template
+						x-for="item in ($store.pinnedArticles.articles ? $store.pinnedArticles.articles : [])"
+					>
+						<article
+							class="relative flex flex-col justify-end px-4 pt-64 pb-6 overflow-hidden bg-gray-100 shadow-lg sm:px-8 sm:pb-8 shadow-slate-800/10 dark:shadow-slate-950/40 group dark:bg-slate-900 isolate rounded-2xl sm:pt-48 lg:pt-80"
+							x-data="{ article: item }"
+							:class="{ [item.pillarId]: item.pillarId, 'pillar/default': !item.pillarId}"
+						>
+							<img
+								loading="lazy"
+								:src="item.fields.thumbnail"
+								x-show="item.fields.thumbnail"
+								alt=""
+								class="absolute inset-0 object-cover w-full h-full -z-10"
+							/>
+							<!-- Image fallback -->
+							<div
+								x-show="!item.fields.thumbnail"
+								class="absolute inset-0 -z-10 grid place-content-center text-[--bright] bg-[--pastel] dark:bg-slate-800 opacity-80 rounded-xl type-3xl"
+							>
+								<span class="icon">
+									<svg aria-hidden="true">
+										<use xlink:href="#remove-media-image" />
+									</svg>
+								</span>
+							</div>
+							<!-- Unpin -->
+							<div class="absolute top-0 right-0 z-20 pt-2 pr-2">
+								<button
+									@click="$store.pinnedArticles.toggle(article)"
+									type="button"
+									class="w-10 h-10 outline grid group/button place-content-center rounded-full bg-[--pastel] text-[--main] opacity-100 type-lg transition hover:bg-[--faded]"
+								>
+									<span class="sr-only"
+										>Unpin this article</span
+									>
+									<span class="relative icon">
+										<svg
+											class="block transition group-hover/button:opacity-0"
+											aria-hidden="true"
+										>
+											<use href="#pin" />
+										</svg>
+										<svg
+											class="absolute inset-0 transition opacity-0 group-hover/button:opacity-100"
+											aria-hidden="true"
+										>
+											<use href="#remove-pin" />
+										</svg>
+									</span>
+								</button>
+							</div>
+							<!-- Gradient -->
+							<div
+								class="absolute inset-x-0 top-0 -bottom-8 -z-10 bg-gradient-to-t bg-blend-multiply from-[--dark] from-20% ease-out duration-500 transition-transform via-transparent via-60% group-focus-within:-translate-y-8 group-hover:-translate-y-8"
+							></div>
+							<!-- Content -->
+							<div
+								class="flex flex-wrap items-center overflow-hidden type-xs text-white/90 gap-y-1"
+							>
+								<time
+									:datetime="item.webPublicationDate"
+									class="mr-8 font-medium"
+									x-text="new Date(item.webPublicationDate).toLocaleDateString('en-AU')"
+								></time>
+								<span
+									x-show="item.pillarName"
+									x-text="item.pillarName"
+									class="relative z-10 type-2xs rounded-full bg-[--pastel] px-3 py-1.5 font-medium text-[--dark]"
+								></span>
+							</div>
+							<h3
+								class="mt-3 font-serif leading-snug type-base line-clamp-3"
+							>
+								<a
+									class="transition text-white/90 outline-none focus:underline hocus:text-[--pastel] before:content-[''] before:absolute before:inset-0"
+									x-text="item.webTitle"
+									:href="item.webUrl"
+								>
+								</a>
+							</h3>
+						</article>
+					</template>
+				</div>
+			</section>
+		</div>
+
+		<!-- Scroll to pinned articles -->
+		<div
+			x-cloak
+			x-transition.opacity
+			x-show="$store.pinnedArticles.articles.length"
+			class="fixed inset-x-0 w-full pointer-events-none bottom-8"
+		>
+			<div
+				class="flex justify-end px-4 mx-auto max-w-7xl sm:px-6 lg:px-8"
+			>
+				<button
+					@click="$refs.pins.scrollIntoView()"
+					type="button"
+					class="flex items-center gap-3 py-2 pl-4 pr-6 text-white transition-colors rounded-full shadow-md pointer-events-auto outline shadow-slate-800/20 hover:bg-brand-main dark:shadow-slate-950/40 bg-brand-pastel dark:bg-brand-dark dark:hover:bg-brand-main"
+				>
+					<span class="relative text-2xl icon">
+						<svg aria-hidden="true">
+							<use xlink:href="#pin" />
+						</svg>
+						<span
+							class="absolute grid w-5 h-5 text-xs font-medium text-white rounded-full -top-1.5 -right-1.5 place-content-center bg-brand-dark dark:bg-brand-pastel"
+							x-text="$store.pinnedArticles.articles.length"
+						></span>
+					</span>
+					<span class="font-medium type-sm">Pins</span>
+				</button>
+			</div>
+		</div>
+
+		<footer
+			class="pt-8 pb-12 mt-auto border-t boder-slate-300 text-400/80 dark:text-slate-500 dark:border-slate-700"
+		>
+			<div
+				class="max-w-5xl text-center type-sm px-4 mx-auto sm:px-6 lg:px-8 [&_a]:underline [&_a]:outline [&_a:hover]:no-underline"
+			>
+				Built by <a href="https://kashkin.net">Nick</a> using
+				<a href="https://alpinejs.dev/">Alpine JS</a>,
+				<a href="https://vitejs.dev/">Vite</a> and
+				<a href="https://tailwindcss.com/">Tailwind CSS</a>.
+			</div>
+		</footer>
+
+		<!-- If no API key is set, prompt the user to set one -->
+		<div
+			class="relative z-10"
+			x-show="!apiKey"
+			x-trap.inert.noscroll="!apiKey"
+			x-cloak
+			x.transition.opacity
+			aria-labelledby="modal-title"
+			role="dialog"
+			aria-modal="true"
+		>
+			<div
+				class="fixed inset-0 transition-opacity bg-slate-600 bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80"
+			></div>
+
+			<div class="fixed inset-0 z-10 overflow-y-auto">
+				<div
+					class="flex items-end justify-center min-h-full p-4 text-center sm:items-center sm:p-0"
+				>
+					<div
+						class="relative px-4 pt-5 pb-4 overflow-hidden text-left bg-white rounded-lg shadow-xl dark:bg-slate-900 sm:my-8 sm:w-full sm:max-w-lg sm:p-6"
+					>
+						<div class="sm:flex sm:items-start">
+							<div
+								class="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto text-white rounded-full bg-brand-pastel sm:mx-0"
+							>
+								<span class="icon type-lg">
+									<svg aria-hidden="true">
+										<use href="#key" />
+									</svg>
+								</span>
+							</div>
+							<div
+								class="mt-3 text-center sm:ml-6 sm:mt-0 sm:text-left"
+							>
+								<h3
+									class="font-medium leading-tight type-base text-slate-800/80 dark:text-slate-200/80"
+									id="modal-title"
+								>
+									Key missing
+								</h3>
+								<div class="mt-2">
+									<p
+										class="type-sm text-slate-600/80 dark:text-slate-300/80"
+									>
+										You need a valid API key for
+										<a
+											href="https://open-platform.theguardian.com/documentation/"
+											target="_blank"
+											rel="noopener"
+											class="underline outline text-brand-main dark:text-slate-200/80 hocus:no-underline"
+											>The Guardian OpenPlatform</a
+										>
+										to use this demo.
+									</p>
+								</div>
+							</div>
+						</div>
+						<div
+							class="relative flex flex-col gap-2 pt-6 mt-6 sm:flex-row"
+						>
+							<div class="flex flex-grow">
+								<label
+									for="apiKey"
+									class="absolute inset-x-0 top-0 font-medium type-xs"
+									:class="apiKeyError ? 'text-news-dark dark:text-news-pastel dark:opacity-80' : 'text-slate-800/80 dark:text-slate-300/80'"
+									x-text="apiKeyError ?? 'Enter API key'"
+									>Enter API key</label
+								>
+								<input
+									type="text"
+									class="flex-grow text-base rounded bg-slate-50 forms-input focus:border-brand-main focus:ring-brand-main dark:text-slate-200/80 dark:bg-slate-800 dark:focus:border-brand-pastel dark:focus:ring-brand-pastel"
+									:class="apiKeyError ? 'border-news-pastel': 'border-slate-400 dark:border-slate-600'"
+									name="apiKey"
+									id="apiKey"
+									placeholder="xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx"
+									x-ref="apiKeyInput"
+									x-mask="********-****-****-************"
+									@change.debounce="$event.target.value.length == 31 ? apiKeyError = null : ''"
+								/>
+							</div>
+							<button
+								@click="confirmApiKey()"
+								type="button"
+								class="inline-flex items-center justify-center flex-shrink-0 px-3 py-2 text-sm font-medium transition-colors rounded outline text-slate-50 bg-brand-main hover:bg-brand-pastel dark:bg-slate-400 dark:text-slate-700 dark:hover:bg-slate-300"
+							>
+								Confirm
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="module" src="/src/js/site.js"></script>
+	</body>
+</html>

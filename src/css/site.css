@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;500&family=Noticia+Text&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	html {
+		@apply font-light font-sans scroll-smooth;
+	}
+
+	strong {
+		@apply font-medium;
+	}
+
+	.font-serif {
+		@apply font-normal;
+	}
+}
+
+@layer components {
+	.icon svg {
+		@apply fill-none;
+		@apply w-[1em] h-[1em] block;
+		@apply stroke-2 stroke-current;
+	}
+}
+
+@layer utilities {
+	.outline {
+		@apply outline-none focus:outline-none;
+		@apply ring-offset-2 dark:ring-offset-slate-900;
+		@apply ring-brand-pastel ring-opacity-80;
+		@apply focus:ring;
+	}
+}
+
+.pillar\/culture,
+.pillar\/arts {
+	--dark: theme(colors.culture.dark);
+	--main: theme(colors.culture.main);
+	--bright: theme(colors.culture.bright);
+	--pastel: theme(colors.culture.pastel);
+	--faded: theme(colors.culture.faded);
+}
+
+.pillar\/opinion {
+	--dark: theme(colors.opinion.dark);
+	--main: theme(colors.opinion.main);
+	--bright: theme(colors.opinion.bright);
+	--pastel: theme(colors.opinion.pastel);
+	--faded: theme(colors.opinion.faded);
+}
+
+.pillar\/default,
+.pillar\/news {
+	--dark: theme(colors.news.dark);
+	--main: theme(colors.news.main);
+	--bright: theme(colors.news.bright);
+	--pastel: theme(colors.news.pastel);
+	--faded: theme(colors.news.faded);
+}
+.pillar\/sport {
+	--dark: theme(colors.sport.dark);
+	--main: theme(colors.sport.main);
+	--bright: theme(colors.sport.bright);
+	--pastel: theme(colors.sport.pastel);
+	--faded: theme(colors.sport.faded);
+}
+
+.pillar\/lifestyle {
+	--dark: theme(colors.lifestyle.dark);
+	--main: theme(colors.lifestyle.main);
+	--bright: theme(colors.lifestyle.bright);
+	--pastel: theme(colors.lifestyle.pastel);
+	--faded: theme(colors.lifestyle.faded);
+}
