@@ -846,10 +846,10 @@
 									:class="apiKeyError ? 'border-news-pastel': 'border-slate-400 dark:border-slate-600'"
 									name="apiKey"
 									id="apiKey"
-									placeholder="xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx"
+									placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 									x-ref="apiKeyInput"
-									x-mask="********-****-****-************"
-									@change.debounce="$event.target.value.length == 31 ? apiKeyError = null : ''"
+									x-mask="********-****-****-****-************"
+									@change.debounce="$event.target.value.length == 36 ? apiKeyError = null : ''"
 								/>
 							</div>
 							<button

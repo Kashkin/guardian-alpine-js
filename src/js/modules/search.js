@@ -84,11 +84,11 @@ const searchData = function () {
 		// Check the provided key length
 		confirmApiKey() {
 			const providedKey = this.$refs.apiKeyInput.value
-			if (providedKey.length == 31) {
+			if (providedKey.length == 36) {
 				this.apiKey = providedKey
 				this.apiKeyError = null
 			} else {
-				this.apiKeyError = "Please enter a 31 digit key"
+				this.apiKeyError = "Please enter a key with 36 characters"
 			}
 		},
 		// Returns API query URL
@@ -114,7 +114,6 @@ const searchData = function () {
 			let validParams = Object.keys(params)
 				.filter((k) => params[k] != null)
 				.reduce((a, k) => ({ ...a, [k]: params[k] }), {})
-			console.log(validParams)
 			return new URL(
 				`${url.origin}${url.pathname}?${new URLSearchParams([
 					...Array.from(url.searchParams.entries()),
