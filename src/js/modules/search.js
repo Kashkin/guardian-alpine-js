@@ -169,7 +169,7 @@ const searchData = function () {
 			let params = {
 				"api-key": this.apiKey,
 				"show-fields":
-					"thumbnail,wordcount,byline,trailText,liveBloggingNow,isLive,lastModified",
+					"thumbnail,wordcount,byline,trailText,liveBloggingNow,isLive,lastModified,bodyText",
 			}
 			return this._addSearchParams(url, params)
 		},

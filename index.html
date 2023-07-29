@@ -468,8 +468,8 @@
 											</a>
 										</h3>
 										<p
-											class="mt-5 leading-snug text-slate-600/80 type-base dark:text-slate-400/80"
-											x-html="item.fields.trailText"
+											class="mt-5 leading-snug line-clamp-3 text-slate-600/80 type-base dark:text-slate-400/80"
+											x-html="item.fields?.bodyText ? item.fields.bodyText.slice(0, 200) + '...' : item.fields.trailText"
 										></p>
 									</div>
 									<div
