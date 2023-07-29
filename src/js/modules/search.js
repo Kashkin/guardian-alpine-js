@@ -51,6 +51,7 @@ const searchData = function () {
 		paramSort: this.$persist("relevance"),
 		paramPage: this.$persist(1),
 		loading: false,
+		listeners: [],
 		async retrieveResults() {
 			// If viewing purely by section, let's get the latest
 			if (this.paramKeywords.length === 0) {
@@ -77,9 +78,64 @@ const searchData = function () {
 				this.$store.search.update(json.response)
 				this.loading = false
 				this.$refs.input.scrollIntoView()
+				this.clearListeners()
 			} else {
 				this.loading = false
 			}
+		},
+		createListener(article) {
+			let interval = setInterval(async () => {
+				console.log("Updating: " + article.webTitle)
+				let json
+				try {
+					const response = await fetch(this._queryArticle(article.id))
+					json = await response.json()
+				} catch (error) {}
+				if (json) {
+					this.$dispatch("update", { article: json.response.content })
+				}
+			}, 5000)
+			this.listeners.push(interval)
+		},
+
+		clearListeners() {
+			let i = this.listeners.length
+			while (i--) {
+				clearInterval(this.listeners[i])
+				this.listeners.splice(i, 1)
+			}
+		},
+		timeSince(dateString, asSeconds = false) {
+			let now = new Date().toUTCString()
+
+			let seconds = Math.floor(
+				(new Date(now) - new Date(dateString)) / 1000
+			)
+
+			if (asSeconds) return Math.floor(seconds)
+
+			let interval = Math.floor(seconds / 31536000)
+
+			if (interval > 1) {
+				return interval + " years ago"
+			}
+			interval = Math.floor(seconds / 2592000)
+			if (interval > 1) {
+				return interval + " months ago"
+			}
+			interval = Math.floor(seconds / 86400)
+			if (interval > 1) {
+				return interval + "d ago"
+			}
+			interval = Math.floor(seconds / 3600)
+			if (interval > 1) {
+				return interval + "h ago"
+			}
+			interval = Math.floor(seconds / 60)
+			if (interval > 1) {
+				return interval + "m ago"
+			}
+			return Math.floor(seconds) + "s ago"
 		},
 		// Check the provided key length
 		confirmApiKey() {
@@ -103,6 +159,15 @@ const searchData = function () {
 					: null,
 				"page-size": 10,
 				"order-by": this.paramSort,
+				"show-fields":
+					"thumbnail,wordcount,byline,trailText,liveBloggingNow,isLive,lastModified",
+			}
+			return this._addSearchParams(url, params)
+		},
+		_queryArticle(id) {
+			const url = new URL(`https://content.guardianapis.com/${id}`)
+			let params = {
+				"api-key": this.apiKey,
 				"show-fields":
 					"thumbnail,wordcount,byline,trailText,liveBloggingNow,isLive,lastModified",
 			}

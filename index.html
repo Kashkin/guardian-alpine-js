@@ -379,9 +379,19 @@
 							x-for="item in ($store.search.results ? $store.search.results.results : [])"
 							:key="item.id"
 						>
+							<!-- All articles seem to be always live blogging... -->
+							<!-- The isLive checks if it was updated in the last 24 hours -->
 							<article
-								x-data="{ article: item, isPinned: $store.pinnedArticles.isPinned(item) }"
-								x-init="$watch('$store.pinnedArticles.articles', () => isPinned = $store.pinnedArticles.isPinned(article) )"
+								x-data="{ 
+									article: item,
+									isPinned: $store.pinnedArticles.isPinned(item),
+									isLive: item.fields.liveBloggingNow && timeSince(item.fields.lastModified, true) < 86400
+								}"
+								x-init="() => { 
+									$watch('$store.pinnedArticles.articles', () => isPinned = $store.pinnedArticles.isPinned(article) );
+									isLive ? createListener(article) : null;
+								}"
+								@update="item = $event.detail.article"
 								x-effect="isPinned = $store.pinnedArticles.isPinned(article) "
 								class="relative flex flex-col shadow-md rounded-xl dark:shadow-slate-950/40 md:flex-row shadow-slate-800/10"
 								:class="{ [item.pillarId]: item.pillarId, 'pillar/default': !item.pillarId}"
@@ -420,7 +430,22 @@
 									<div
 										class="flex items-center type-xs gap-x-4"
 									>
+										<div
+											class="flex items-center gap-x-2"
+											x-show="isLive"
+										>
+											<span
+												class="px-3 py-1.5 uppercase type-2xs font-medium rounded-full bg-highlight dark:bg-highlight-dark text-slate-600/70 dark:text-slate-950"
+												>Live</span
+											>
+											<time
+												:datetime="item.fields.lastModified"
+												class="font-medium text-slate-600/70 dark:text-slate-400/70"
+												x-text="timeSince(item.fields.lastModified)"
+											></time>
+										</div>
 										<time
+											x-show="!isLive"
 											:datetime="item.webPublicationDate"
 											class="font-medium text-slate-600/70 dark:text-slate-400/70"
 											x-text="new Date(item.webPublicationDate).toLocaleDateString('en-AU')"

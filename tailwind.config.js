@@ -76,6 +76,10 @@ export default {
 					main: "#052962",
 					pastel: "#506991",
 				},
+				highlight: {
+					DEFAULT: "#ffe500",
+					dark: "#ffbb50",
+				},
 				news: {
 					dark: "#ab0613",
 					main: "#c70000",
